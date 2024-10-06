@@ -1,31 +1,38 @@
-import { View, StyleSheet,Text } from 'react-native';
-import React, { useContext } from 'react';
+import { View, StyleSheet, Text } from 'react-native';
+import React, { useEffect, useState, useContext } from 'react';
 import AppMapView from './AppMapView';
 import Header from './Header';
-import SearchBar from './SearchBar';
 import PlaceListView from './PlaceListView';
 import { UserLocationContext } from '../../Context/UserLocationContext';
-
+import { auth } from '../../../firebase'; // Adjust the path to your Firebase config
 
 export default function HomeScreen() {
   const { location } = useContext(UserLocationContext);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user); // Update user state when authentication state changes
+    });
+
+    return () => unsubscribe(); // Clean up the listener on unmount
+  }, []);
 
   return (
     <View style={styles.container}>
       {/* Header Section */}
       <View style={styles.headerContainer}>
-        <Header />
+        <Header user={user} /> {/* Pass user to Header if needed */}
         <Text style={{
-          textAlign:'center',
-          fontFamily:'outfit-bold',
-          fontSize:28
+          textAlign: 'center',
+          fontFamily: 'outfit-bold',
+          fontSize: 28
         }}>Stations Near You</Text>
       </View>
 
       {/* Place List View */}
       <View style={styles.placeListContainer}>
         <PlaceListView />
-        
       </View>
 
       {/* Map View */}
@@ -52,7 +59,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '100%',
     zIndex: 10,
-    width:'100%' // Ensure PlaceListView is visible above the map
   },
   mapContainer: {
     flex: 1,

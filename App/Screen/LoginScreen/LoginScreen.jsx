@@ -1,101 +1,144 @@
-import { View, Text,Image, StyleSheet, TouchableOpacity } from 'react-native'
-import React from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState } from 'react';
 import Colors from '../../Utils/Colors';
-import * as WebBrowser from "expo-web-browser";
-import { useWarmUpBrowser } from "../../../hooks/useWarmUpBrowser";
-import { useOAuth } from '@clerk/clerk-expo';
+import { auth } from '../../../firebase'; // Adjust the path accordingly
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  WebBrowser.maybeCompleteAuthSession();
-
-  useWarmUpBrowser();
- 
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  const onPress=async()=>{
+  const onPress = async () => {
     try {
-      const { createdSessionId, signIn, signUp, setActive } =
-        await startOAuthFlow();
- 
-      if (createdSessionId) {
-        setActive({ session: createdSessionId });
-      } else {
-        // Use signIn or signUp for next steps such as MFA
-      }
-    } catch (err) {
-      
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Successfully signed in
+      const user = userCredential.user;
+      console.log("User signed in: ", user);
+      // Navigate to the next screen or perform your desired actions
+    } catch (error) {
+      setError(error.message);
+      console.error("Error signing in with email and password: ", error);
     }
+  };
 
-  }
   return (
-    <View  style={{
-        display:'flex',
-        justifyContent:'center',
-        alignItems:'center',
-        marginTop:30
-    }}>
-      <Image source={require('../../../assets/images/logo.png')}
-        style={styles.logoImage}
-      />
+    <View style={styles.container}>
+      <Image source={require('../../../assets/images/logo.png')} style={styles.logoImage} />
+      <Image source={require('../../../assets/images/ev-maker.png')} style={styles.bgimage} />
 
-      <Image source={require('../../../assets/images/ev-maker.png')}
-        style={styles.bgimage}
-      />
-      <View style={{padding:20}}>
+      <View style={styles.formContainer}>
         <Text style={styles.heading}>Find the Nearest EV Station</Text>
         <Text style={styles.desc}>At Ease!</Text>
-        <Text style={styles.small}>Get the location of all the ev stations</Text>
-        <TouchableOpacity style={styles.button}
-        onPress={onPress}
-        >
-            <Text style={{color:Colors.WHITE,
-                          textAlign:'center',
-                          fontFamily:'outfit',
-                          fontSize:17
-                          }}>
-                Continue with Google
-            </Text>
+        <Text style={styles.small}>Get the location of all the EV stations</Text>
+
+        {/* Email Input */}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          placeholderTextColor={Colors.GRAY}
+        />
+
+        {/* Password Input */}
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholderTextColor={Colors.GRAY}
+        />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        <TouchableOpacity style={styles.button} onPress={onPress}>
+          <Text style={styles.buttonText}>
+            Sign In
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  logoImage:{
-    width:200,
-    height:60,
-    objectFit:'contain',
-    marginTop:40,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 30,
   },
-  bgimage:{
-    width:'200%',
-    height:180,
-    marginTop:40,
-    objectFit:'contain'
+  logoImage: {
+    width: 200,
+    height: 60,
+    objectFit: 'contain',
+    marginTop: 40,
   },
-  heading:{
-    fontSize:22,
-    fontFamily:'outfit-bold',
-    textAlign:'center',
-    marginTop:30
+  bgimage: {
+    width: '200%',
+    height: 180,
+    marginTop: 40,
+    objectFit: 'contain',
   },
-  small:{
-    textAlign:'center',
+  formContainer: {
+    padding: 20,
+    width: '100%',
+    alignItems: 'center',
   },
-  desc:{
-    fontSize:25,
-    fontFamily:'outfit-bold',
-    textAlign:'center',
-    color:'#03A63C'
+  heading: {
+    fontSize: 22,
+    fontFamily: 'outfit-bold',
+    textAlign: 'center',
+    marginTop: 30,
   },
-  button:{
-    backgroundColor:Colors.PRIMARY,
-    padding:16,
-    display:'flex',
-    borderRadius:99,
-    marginTop:50
-
-
-  }
-})
+  small: {
+    textAlign: 'center',
+    marginVertical: 5,
+  },
+  desc: {
+    fontSize: 25,
+    fontFamily: 'outfit-bold',
+    textAlign: 'center',
+    color: '#03A63C',
+  },
+  button: {
+    backgroundColor: Colors.PRIMARY,
+    padding: 16,
+    borderRadius: 30,
+    marginTop: 30,
+    width: '80%', // Ensure button width matches input fields
+  },
+  buttonText: {
+    color: Colors.WHITE,
+    textAlign: 'center',
+    fontFamily: 'outfit',
+    fontSize: 17,
+  },
+  input: {
+    height: 50,
+    borderColor: Colors.GRAY,
+    borderWidth: 1,
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingHorizontal: 15,
+    width: '80%',
+    backgroundColor: 'white', // Optional: make the input fields stand out
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 2, // For Android
+  },
+  error: {
+    color: 'red',
+    textAlign: 'center',
+    marginVertical: 10,
+  },
+});
